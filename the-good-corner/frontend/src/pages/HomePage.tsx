@@ -1,21 +1,27 @@
-import { useEffect, useState } from "react";
 import AdGallery from "../organisms/AdGallery";
-import { AdCardProps } from "../molecules/AdCard";
-import axios from "axios";
+import { gql, useQuery } from "@apollo/client";
+
+const GET_ADS = gql`
+  query Query {
+  getAds {
+    id
+    title
+    description
+    owner
+    price
+    picture
+    location
+    createdAt
+  }
+}
+`;
 
 export default function HomePage() {
-    const [ads, setAds] = useState<AdCardProps[]>([]);
-    
-	async function fetchData() {
-		const { data } = await axios.get<AdCardProps[]>(
-			"http://localhost:3000/ads",
-		);
-		setAds(data);
-	}
 
-	useEffect(() => {
-		fetchData();
-	}, []);
+	const { loading, error, data } = useQuery(GET_ADS);
 
-    return <AdGallery title="Annonces les plus récentes" ads={ads} />
+	if (loading) return <p>Loading...</p>;
+	if (error) return <p>Error: {error.message}</p>;
+
+	return <AdGallery title="Annonces les plus récentes" ads={data.getAds} />;
 }
