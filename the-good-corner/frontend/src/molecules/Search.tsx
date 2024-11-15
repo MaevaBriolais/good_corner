@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react"
 import "./Search.module.css"
 import { Link } from "react-router-dom"
-import { searchAds } from "../libs/api"
+import { searchAds } from "../libs/api";
 import { Ad } from "../types/Api"
 
 export default function Search() {
@@ -24,6 +24,7 @@ export default function Search() {
             const data = await searchAds(evt.currentTarget.value)
             setResults(data)
             setNoResults(false)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch(err) {
             setResults([])
             setNoResults(true)

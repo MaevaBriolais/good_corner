@@ -1,26 +1,23 @@
 import "reflect-metadata";
-import express from "express";
 import { dataSource } from "./config/db";
-import cors from "cors";
-import categoriesRouter from "./routes/categories";
-import tagsRouter from "./routes/tags";
-import adsRouter from "./routes/ads";
-
-const app = express();
-app.use(express.json());
-app.use(cors());
+import { buildSchema } from "type-graphql";
+import { AdResolver } from "./resolvers/AdResolver";
+import { ApolloServer } from "@apollo/server";
+import { startStandaloneServer } from "@apollo/server/standalone";
+import { CategoryResolver } from "./resolvers/CategoryResolver";
 
 const port = 3000;
 
-app.get("/", (req, res) => {
-	res.send("Hello World!");
-});
-
-app.use("/categories", categoriesRouter)
-app.use("/tags", tagsRouter)
-app.use("/ads", adsRouter)
-
-app.listen(port, async () => {
+const start = async () => {
 	await dataSource.initialize();
-	console.log(`Example app listening on port ${port}`);
-});
+	const schema = await buildSchema({
+		resolvers: [AdResolver, CategoryResolver],
+	});
+	const apiServer = new ApolloServer({ schema });
+	const { url } = await startStandaloneServer(apiServer, {
+		listen: { port: port },
+	});
+	console.log("Hey, ça marche ! =D");
+	console.log(url);
+};
+start();

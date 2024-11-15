@@ -1,57 +1,64 @@
 import {
-	BaseEntity,
-	BeforeInsert,
-	Column,
-	Entity,
-	JoinTable,
-	ManyToMany,
-	ManyToOne,
-	PrimaryGeneratedColumn,
+  BaseEntity,
+  BeforeInsert,
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from "typeorm";
 import { Category } from "./Category";
 import { Tag } from "./Tag";
+import { Field, ObjectType } from "type-graphql";
 
 @Entity()
+@ObjectType()
 export class Ad extends BaseEntity {
-	@PrimaryGeneratedColumn()
-	id!: number;
+  @Field()
+  @PrimaryGeneratedColumn()
+  id!: string;
 
-	@Column()
-	title!: string;
+  @Field()
+  @Column()
+  title!: string;
 
-	@Column({nullable:true})
-	description?: string;
+  @Field()
+  @Column({ nullable: true })
+  description?: string;
 
-	@Column()
-	owner!: string;
+  @Field()
+  @Column()
+  owner!: string;
 
-	@Column()
-	price!: number;
+  @Field()
+  @Column()
+  price!: number;
 
-	@Column()
-	picture!: string;
+  @Field()
+  @Column()
+  picture!: string;
 
-	@Column()
-	location!: string;
+  @Field()
+  @Column()
+  location!: string;
 
-	@Column()
-	createdAt!: Date;
+  @Field()
+  @Column()
+  createdAt!: Date;
 
-	@BeforeInsert()
-	updateDates() {
-		this.createdAt = new Date();
-	}  
+  @Field(() => Category, {nullable: true})
+  @ManyToOne(() => Category, (category) => category.ads)
+  category!: Category;
 
-	@ManyToOne(
-		() => Category,
-		(category) => category.ads,
-	)
-	category!: Category;
 
-	@ManyToMany(
-		() => Tag,
-		(tag) => tag.ads,
-	)
-	@JoinTable()
-	tags!:Tag[]
+  @Field(() => [Tag])
+  @ManyToMany(() => Tag, (tag) => tag.ads)
+  @JoinTable()
+  tags!: Tag[];
+
+  @BeforeInsert()
+  updateDates() {
+    this.createdAt = new Date();
+  }
 }
