@@ -18,7 +18,11 @@ export class CategoryResolver{
 
     @Query(() => Category)
     async getCategoryById(@Arg("id") id: string){
-        const category = await Category.findOneByOrFail({id})
+        const category = await Category.findOne({
+            where: { id },
+            relations: ["ads"],
+        });
+    
         return category
     }
 

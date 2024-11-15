@@ -1,23 +1,49 @@
-import { useEffect, useState } from "react";
-import AdGallery from "../organisms/AdGallery";
-import { AdCardProps } from "../molecules/AdCard";
-import axios from "axios";
 import { useParams } from "react-router-dom";
+import { gql, useQuery } from "@apollo/client";
+import AdGallery from "../organisms/AdGallery";
+
+const GET_ADS = gql`
+  query GetCategoryById($id: String!) {
+    getCategoryById(id: $id) {
+      id
+      name
+      ads {
+        id
+        title
+        description
+        owner
+        price
+        picture
+        location
+        createdAt
+      }
+    }
+  }
+`;
 
 export default function CategoryPage() {
-    const [ads, setAds] = useState<AdCardProps[]>([]);
-    const {catId} = useParams()
-    
-	async function fetchData() {
-		const { data } = await axios.get<AdCardProps[]>(
-			`http://localhost:3000/ads?categoryId=${catId}`,
-		);
-		setAds(data);
-	}
+  const { catId } = useParams();
+  
+  console.log("catId:", catId);
+  
+  const { loading, error, data } = useQuery(GET_ADS, {
+    variables: { id: catId },
+    skip: !catId,
+  });
 
-	useEffect(() => {
-		fetchData();
-	}, [catId]);
+  console.log("Data:", data);
 
-    return <AdGallery title={`Annonces de la catégorie n°${catId}`} ads={ads} />
+  if (loading) return <p>Chargement...</p>;
+  if (error) return <p>Erreur : {error.message}</p>;
+
+  console.log("DATA", data?.getCategoryById);
+
+  return (
+    <AdGallery
+      title={`Annonces de la catégorie ${
+        data?.getCategoryById?.name || "Non défini"
+      }`}
+      ads={data?.getCategoryById?.ads || []}
+    />
+  );
 }
