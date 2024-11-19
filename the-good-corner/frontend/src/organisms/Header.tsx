@@ -1,22 +1,12 @@
 import { Link } from "react-router-dom";
 import Search from "../molecules/Search";
-import { gql, useQuery } from "@apollo/client";
-
-const GET_CATEGORIES = gql`
-  query Query {
-    getCategories {
-      id
-      name
-    }
-  }
-`;
+import { useGetCategoriesQuery } from "../libs/graphql/generated/graphql-types";
 
 function Header() {
-
-  const { loading, error, data } = useQuery(GET_CATEGORIES);
+  const { loading, error, data } = useGetCategoriesQuery();
 
   if (loading) return <p>Loading...</p>;
-  if (error) return <p>Error: {error.message}</p>;
+  if (error) return <p>Achtung! We broke something!</p>;
 
   return (
     <header className="header">

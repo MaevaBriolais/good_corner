@@ -1,82 +1,93 @@
-import axios from "axios";
-import { FormEvent, useEffect, useState } from "react";
-import { Category } from "../types/Api";
-import Select from 'react-select'
-import sdk from "../libs/api";
+import { useEffect, type FormEvent } from "react";
+import Select from "react-select";
+import { useNavigate } from "react-router-dom";
+import {
+  type AdInput,
+  useCreateAdMutation,
+  useGetCategoriesAndTagsQuery,
+} from "../libs/graphql/generated/graphql-types";
 
 export default function AdCreationForm() {
-    const [categories, setCategories]=useState<Category[]>([])
-    const [tags, setTags]=useState([])
+  const { loading, error, data } = useGetCategoriesAndTagsQuery();
+  const [createAd, { data: dataSub, loading: subLoading, error: subError }] =
+    useCreateAdMutation();
 
-      async function fetchCategories() {
-        const data = await sdk.getCategories()
-        setCategories(data)
-    }
-    async function fetchTags() {
-        let data = await sdk.getTags()
-        type ApiTag = {
-            id:number,
-            name:string
-        }
-        data = data.map((apiTag:ApiTag)=>({value:apiTag.id, label: apiTag.name}))
-        setTags(data)
-    }
-    
+  const navigate = useNavigate();
 
-    useEffect( ()=>{
-        fetchCategories()
-        fetchTags()
-    }, [] )
+  const hSubmit = (evt: FormEvent) => {
+    evt.preventDefault();
 
-    const hSubmit = (evt: FormEvent)=>{
-        evt.preventDefault()
-        
-        const form = evt.target;
-        const formData = new FormData(form as HTMLFormElement)
-        const formJson = Object.fromEntries(formData.entries())
-        
-        axios.post("http://localhost:3000/ads", formJson)
-    }
+    const form = evt.target;
+    const formData = new FormData(form as HTMLFormElement);
+    const formJson = Object.fromEntries(formData.entries());
 
+    const formattedData = {
+      ...formJson,
+      price: Number.parseFloat(formJson.price as string),
+      tags: (formJson.tags as string).split(","),
+    };
 
-    return (
-        <main className="main-content">
-    <form onSubmit={hSubmit}>
+    createAd({ variables: { data: formattedData as AdInput } });
+  };
+
+  useEffect(() => {
+    if (!dataSub) return;
+    navigate(`/ads/${dataSub.createAd.id}`);
+  }, [dataSub, navigate]);
+
+  if (error || subError) return <>Error!</>;
+  if (loading) return <>Loading...</>;
+  if (!data) return <>We couldn't find anything to display</>;
+  return (
+    <main className="main-content">
+      <form onSubmit={hSubmit}>
         <label>
-            Titre:
-            <input className="text-field" name="title" />
+          Titre:
+          <input className="text-field" name="title" />
         </label>
         <label>
-            Description:
-            <input className="text-field" name="description" />
+          Description:
+          <input className="text-field" name="description" />
         </label>
         <label>
-        Owner:
-            <input className="text-field" name="owner" />
+          Owner:
+          <input className="text-field" name="owner" />
         </label>
         <label>
-        Price:
-            <input className="text-field" name="price" />
+          Price:
+          <input className="text-field" name="price" type="number" />
         </label>
         <label>
-        Picture:
-            <input className="text-field" name="picture" />
+          Picture:
+          <input className="text-field" name="picture" />
         </label>
         <label>
-        Location:
-            <input className="text-field" name="location" />
+          Location:
+          <input className="text-field" name="location" />
         </label>
-        <select name="categoryId">
-        {
-            categories.map((category)=><option key={category.id} value={category.id}>{category.name}</option>)
-        }
+        <select name="category">
+          {data.getCategories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
         </select>
         <label>
-            Tags:
-            <Select options={tags} isMulti name="tagsIds" delimiter="," />
+          Tags:
+          <Select
+            options={data.getTags.map((apiTag: ApiTag) => ({
+              value: apiTag.id,
+              label: apiTag.name,
+            }))}
+            isMulti
+            name="tags"
+            delimiter=","
+          />
         </label>
-        <button className="button">Create Ad!</button>
-    </form>
-        </main>
-    )
+        <button type="submit" className="button" disabled={subLoading}>
+          Create Ad!
+        </button>
+      </form>
+    </main>
+  );
 }

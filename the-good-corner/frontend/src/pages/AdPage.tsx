@@ -1,44 +1,35 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import AdDetail, { AdDetailProps } from "../organisms/AdDetail";
+import AdDetail from "../organisms/AdDetail";
 import AdEditionForm from "../organisms/AdEditionForm";
-
+import { useGetAdQuery } from "../libs/graphql/generated/graphql-types";
 
 export default function AdPage() {
-    const {adId} = useParams()
-	const [editionMode, setEditionMode] = useState(false)
-    const [ad, setAd] = useState<AdDetailProps|null>(null);
-    
-	async function fetchData() {
-		const { data } = await axios.get<AdDetailProps>(
-			`http://localhost:3000/ads/${adId}`,
-		);
-		setAd(data);
-	}
+  const { adId } = useParams();
+  const { loading, error, data } = useGetAdQuery({
+    variables: { adId: `${adId}` },
+  });
 
-	const hClick = ()=>{
-		setEditionMode(!editionMode)
-	}
+  const [editionMode, setEditionMode] = useState(false);
 
-	useEffect(() => {
-		fetchData();
-	}, [adId]);
+  const hClick = () => {
+    setEditionMode(!editionMode);
+  };
 
-	if(!adId) return <p>Huh, we're missing the ad number :/</p>
-	
-	if(!ad) return <p>Loading...</p>
-
-	return (
-		<>
-			<label>
-				Edit mode: <input type='checkbox' checked={editionMode} onChange={hClick} />
-			</label>
-			{editionMode ?
-				<AdEditionForm {...ad} id={Number(adId)} />
-				:
-				<AdDetail {...ad} />
-			}
-		</>
-	)
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Aw fck, something broke !</p>;
+  if (!data || !adId) return <p>We couldn't find anything to display</p>;
+  return (
+    <>
+      <label>
+        Edit mode:{" "}
+        <input type="checkbox" checked={editionMode} onChange={hClick} />
+      </label>
+      {editionMode ? (
+        <AdEditionForm {...data.getAdById} id={adId} />
+      ) : (
+        <AdDetail {...data.getAdById} />
+      )}
+    </>
+  );
 }

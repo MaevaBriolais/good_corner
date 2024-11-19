@@ -1,49 +1,20 @@
-import { useParams } from "react-router-dom";
-import { gql, useQuery } from "@apollo/client";
 import AdGallery from "../organisms/AdGallery";
-
-const GET_ADS = gql`
-  query GetCategoryById($id: String!) {
-    getCategoryById(id: $id) {
-      id
-      name
-      ads {
-        id
-        title
-        description
-        owner
-        price
-        picture
-        location
-        createdAt
-      }
-    }
-  }
-`;
+import { useParams } from "react-router-dom";
+import { useGetAdsByCategoryQuery } from "../libs/graphql/generated/graphql-types";
 
 export default function CategoryPage() {
   const { catId } = useParams();
-  
-  console.log("catId:", catId);
-  
-  const { loading, error, data } = useQuery(GET_ADS, {
-    variables: { id: catId },
-    skip: !catId,
+  const { loading, error, data } = useGetAdsByCategoryQuery({
+    variables: { categoryId: `${catId}` },
   });
 
-  console.log("Data:", data);
-
-  if (loading) return <p>Chargement...</p>;
-  if (error) return <p>Erreur : {error.message}</p>;
-
-  console.log("DATA", data?.getCategoryById);
-
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Aw fck, something broke !</p>;
+  if (!data) return <>We couldn't find anything to display</>;
   return (
     <AdGallery
-      title={`Annonces de la catégorie ${
-        data?.getCategoryById?.name || "Non défini"
-      }`}
-      ads={data?.getCategoryById?.ads || []}
+      title={`Annonces de la catégorie n°${catId}`}
+      ads={data.getAdsByCategory}
     />
   );
 }
