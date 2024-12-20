@@ -21,7 +21,7 @@ const start = async () => {
 	const { url } = await startStandaloneServer(apiServer, {
 		listen: { port: port },
 	});
-	console.log("Hey, ça marche ! =D");
+	console.log("Hey, it's ok ! =D");
 	console.log(url);
 };
 start();
